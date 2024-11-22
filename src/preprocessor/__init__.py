@@ -42,9 +42,17 @@ class Preprocessor:
         
         raise NotImplementedError
     
-    def transform_ctg_to_num(self, column: str, mode: str = "default"):
-        if mode == "default":
-            pass
+    def transform_ctg_to_num(self, categories: list[dict]):
+        for column, mode in categories.items():
+            if mode == "default":
+                self.data[column] = self.data[column].astype("category").cat.codes
+            elif mode == "one_hot":
+                one_hot = pd.get_dummies(self.data[column], prefix=column)
+                self.data = pd.concat([self.data.drop(columns=[column]), one_hot], axis=1)
+            else:
+                raise ValueError(f'Unknown mode: {mode}')
+
+        return self.data
 
     def __get_new_features_from_engine(self, decription: str):
         horsepower_match = re.search(r'(\d+(\.\d+)?)HP', decription)
